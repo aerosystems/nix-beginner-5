@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -36,7 +37,7 @@ func main() {
 	wg.Wait()
 }
 
-func writeData(path string, content string) {
+func writeData(path string, content []byte) {
 	file, err := os.OpenFile(
 		path,
 		os.O_WRONLY|os.O_TRUNC|os.O_CREATE,
@@ -47,11 +48,31 @@ func writeData(path string, content string) {
 	}
 	defer file.Close()
 
-	byteSlice := []byte(content)
-	_, err = file.Write(byteSlice)
+	_, err = file.Write(content)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func writeDataWithBuff(path string, content []byte) {
+	file, err := os.OpenFile(
+		path,
+		os.O_WRONLY|os.O_TRUNC|os.O_CREATE,
+		0666,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	file.Sync()
+	writer := bufio.NewWriter(file)
+
+	_, err = writer.Write(content)
+	if err != nil {
+		log.Fatal(err)
+	}
+	writer.Flush()
 }
 
 func clearDirectory(directory string) {
@@ -72,21 +93,23 @@ func deleteFile(path string) {
 	}
 }
 
-func getData(url string, method string, client *http.Client) (string, error) {
+func getData(url string, method string, client *http.Client) ([]byte, error) {
 	req, err := http.NewRequest(method, url, nil)
+	var emptyArr []byte
+
 	if err != nil {
-		return "", err
+		return emptyArr, err
 	}
 	res, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return emptyArr, err
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", err
+		return emptyArr, err
 	}
-	return string(body), nil
+	return body, nil
 }
