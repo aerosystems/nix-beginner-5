@@ -82,6 +82,9 @@ func clearDirectory(directory string) {
 	}
 	for _, file := range files {
 		pathToFile := fmt.Sprintf("%s/%s", directory, file.Name())
+		if file.Name() == ".gitignore" {
+			continue
+		}
 		deleteFile(pathToFile)
 	}
 }
